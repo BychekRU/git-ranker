@@ -1,0 +1,29 @@
+{
+    "name": "bychekru/git-ranker",
+    "description": "A library for easy working with GitHub API, Git Bash, and calculating contribution rating",
+    "version": "0.4.0",
+    "keywords": [
+        "git",
+        "github",
+        "gitbash",
+        "rank",
+        "rating",
+        "contribution",
+        "php"
+    ],
+    "homepage": "https://github.com/BychekRU/git-ranker/",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Victor Bychek",
+            "email": "a@bychek.ru",
+            "homepage": "https://bychek.ru"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "bychekru\\git_ranker\\": "src"
+        }
+    }
+}
