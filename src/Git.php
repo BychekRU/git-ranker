@@ -91,7 +91,7 @@ class Git {
     }
 
     private static function processAppDir($path) {
-        return trim($path, '/\\');
+        return rtrim($path, '/\\');
     }
 
     /**
@@ -177,11 +177,11 @@ class Git {
     }
 
     public static function getAppDir() {
-        return self::$appDir . '\\';
+        return self::$appDir . '/';
     }
 
     public static function getTempDir() {
-        return self::$tempDir . '\\';
+        return self::$tempDir . '/';
     }
 
     public static function error($error) {

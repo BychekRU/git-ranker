@@ -27,7 +27,7 @@ class Webhook {
 
         $extractDir = Git::getTempDir() . $filename . '/';
         mkdir($extractDir);
-        $unpackTo = Git::getAppDir();
+        $unpackTo = rtrim(Git::getAppDir(),'\\/');
 
         $zip = new ZipArchive;
         if ($zip->open($zipName) === TRUE) {

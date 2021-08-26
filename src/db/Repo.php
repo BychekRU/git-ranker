@@ -1,6 +1,6 @@
 <?php
 
-namespace bychekru\git_ranker\DB;
+namespace bychekru\git_ranker\db;
 
 use bychekru\git_ranker\Git;
 
