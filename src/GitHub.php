@@ -67,7 +67,7 @@ class GitHub {
         if (!$answer)
             Git::error('Please make sure you state your GitHub username');
 
-        else if (is_object($answer) && $answer->message) {
+        else if (is_object($answer) && property_exists($answer, 'message')) {
             if ($answer->message == 'Bad credentials')
                 Git::error('You use incorrect token');
 
@@ -84,6 +84,7 @@ class GitHub {
     }
 
     private static function processHeaders($ch, $line) {
+        if (!trim($line) || strpos($line, ':') === false) return strlen($line);
         list($key, $value) = explode(':', $line, 2);
         self::$headers[trim($key)] = trim($value);
         return strlen($line);
@@ -97,12 +98,19 @@ class GitHub {
         $firstCommitHash = db\Repo::getFirstCommit();
         if ($firstCommitHash) return $firstCommitHash;
 
-        GitHub::load(Git::getRepoPath() . 'commits?sha=' . Git::getRepoBranch() . '&page=1&per_page=' . Git::getCommitsPerPage());
+        $lastCommitsPage = GitHub::load(Git::getRepoPath() . 'commits?sha=' . Git::getRepoBranch() . '&page=1&per_page=' . Git::getCommitsPerPage());
 
-        $lastPage = intval(explode('page=', GitHub::getLastResponseHeaders()['link'])[3]);
+        $headers = GitHub::getLastResponseHeaders();
+        if (isset($headers['link'])) {
+            $lastPage = intval(explode('page=', $headers['link'])[3]);
 
-        $lastCommitsPage = GitHub::load(Git::getRepoPath() . 'commits?sha=' . Git::getRepoBranch() . '&page=' . $lastPage . '&per_page=' . Git::getCommitsPerPage());
-        $firstCommitHash = $lastCommitsPage[count($lastCommitsPage) - 1]->sha;
+            $lastCommitsPage = GitHub::load(Git::getRepoPath() . 'commits?sha=' . Git::getRepoBranch() . '&page=' . $lastPage . '&per_page=' . Git::getCommitsPerPage());
+            $firstCommitHash = array_pop($lastCommitsPage)->sha;
+        } else {
+            // if GitHub doesn't send `link` header when all commits are listed on one page,
+            // there's no need to make an additional query
+            $firstCommitHash = array_pop($lastCommitsPage)->sha;
+        }
 
         return $firstCommitHash;
     }

@@ -17,7 +17,7 @@ class RemoteGit {
                     'additions' => $file->additions,
                     'deletions' => $file->deletions,
                     'changes' => $file->changes,
-                    'previous_filename' => $file->previous_filename,
+                    'previous_filename' => property_exists($file, 'previous_filename') ? $file->previous_filename : '',
                     'status' => $file->status,
                     'patch' => $file->patch,
                 ];

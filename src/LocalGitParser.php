@@ -31,9 +31,9 @@ class LocalGitParser {
             }
             if (substr($line, 0, 5) == '--- a' || substr($line, 0, 5) == '--- /' || substr($line, 0, 6) == '--- "a') {
                 // before process the next file, update an array for the current
-                if ($files[$filename]) $files[$filename]->patch = $patch;
+                if (isset($files[$filename])) $files[$filename]->patch = $patch;
 
-                if ($files[$new_filename]) $files[$new_filename]->patch = $patch;
+                if (isset($files[$new_filename])) $files[$new_filename]->patch = $patch;
 
                 $patch = '';
                 // previous/not-chaged filename or file created
@@ -81,9 +81,9 @@ class LocalGitParser {
                 // renamed withot changes in file
                 if (substr($line, 0, 11) == 'rename from') {
                     // before process the next file, update an array for the current
-                    if ($files[$filename]) $files[$filename]->patch = $patch;
+                    if (isset($files[$filename])) $files[$filename]->patch = $patch;
 
-                    if ($files[$new_filename]) $files[$new_filename]->patch = $patch;
+                    if (isset($files[$new_filename])) $files[$new_filename]->patch = $patch;
 
                     $patch = '';
 
@@ -113,7 +113,7 @@ class LocalGitParser {
         foreach ($files as $filename => $file) {
             $files[$filename]->changes = $files[$filename]->additions + $files[$filename]->deletions;
 
-            if ($file->renamed || $file->filename != $filename)
+            if ($file->status == 'renamed' || $file->filename != $filename)
                 unset($files[$file->previous_filename]);
         }
 
@@ -144,6 +144,12 @@ class LocalGitParser {
                     'commit' => (object) [
                         'author' => (object) [
                             'name' => '',
+                            'email' => '',
+                            'date' => '',
+                        ],
+                        'committer' => (object) [
+                            'name' => '',
+                            'email' => '',
                             'date' => '',
                         ],
                         'message' => '',
@@ -154,8 +160,14 @@ class LocalGitParser {
                 $notPatch = true;
             } else if (substr($line, 0, 7) == 'Author:') {
                 $commits[$hash]->commit->author->name = explode(' <', substr($line, 8))[0];
-            } else if (substr($line, 0, 5) == 'Date:') {
-                $commits[$hash]->commit->author->date = trim(substr($line, 6));
+                $commits[$hash]->commit->author->email = explode('>', explode(' <', substr($line, 8))[1])[0];
+            } else if (substr($line, 0, 11) == 'AuthorDate:') {
+                $commits[$hash]->commit->author->date = trim(substr($line, 12));
+            } else if (substr($line, 0, 7) == 'Commit:') {
+                $commits[$hash]->commit->committer->name = explode(' <', substr($line, 8))[0];
+                $commits[$hash]->commit->committer->email = explode('>', explode(' <', substr($line, 8))[1])[0];
+            } else if (substr($line, 0, 11) == 'CommitDate:') {
+                $commits[$hash]->commit->committer->date = trim(substr($line, 12));
             } else if ($line == '' && !$foundEmptyLine) {
                 $foundEmptyLine = true;
                 $message = '';

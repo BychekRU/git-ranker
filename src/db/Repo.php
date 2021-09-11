@@ -56,34 +56,38 @@ class Repo {
         }
 
         $firstCommit = Git::getFirstCommitHash();
+        $path = Git::getRepoPath();
         $table = self::generateTableName(Git::getRepoPath(), $firstCommit);
         self::$table = $table;
 
         $stmt = self::$db->prepare('INSERT INTO
             repos (source, table_name, first_commit)
             VALUES (:source, :table_name, :first_commit)');
-        $stmt->bindParam(':source', Git::getRepoPath());
+        $stmt->bindParam(':source', $path);
         $stmt->bindParam(':table_name', $table);
         $stmt->bindParam(':first_commit', $firstCommit);
         $result = $stmt->execute();
 
         if (!self::isTableExists($table)) {
-            self::$db->query('CREATE table ' . $table . ' (id INTEGER PRIMARY KEY, hash TEXT, date DATE, author TEXT, message TEXT, files TEXT)');
+            self::$db->query('CREATE table ' . $table . ' (id INTEGER PRIMARY KEY, hash TEXT, author_date DATE, author TEXT, commit_date DATE, committer TEXT, message TEXT, files TEXT)');
         }
+
+        Commit::init(self::$db, self::$table);
 
         return $result;
     }
 
     private static function getTableName() {
+        $path = Git::getRepoPath();
         $stmt = self::$db->prepare('SELECT table_name FROM repos WHERE source = :source');
-        $stmt->bindParam(':source', Git::getRepoPath());
+        $stmt->bindParam(':source', $path);
 
         return $stmt->execute()->fetchArray(SQLITE3_ASSOC)['table_name'];
     }
 
     private static function generateTableName($name, $firstCommit) {
-        $arr = explode("/", trim($name, "/"));
-        return preg_replace('/[^-_a-z\d]/ui', '', $arr[count($arr) - 1]) . '_' . $firstCommit;
+        $arr = explode('/', trim($name, '/'));
+        return str_replace('-', '_', preg_replace('/[^-_a-z\d]/ui', '', $arr[count($arr) - 1])) . '_' . $firstCommit;
     }
 
     public static function isTableExists($table) {
@@ -94,8 +98,9 @@ class Repo {
     }
 
     public static function getFirstCommit() {
+        $path = Git::getRepoPath();
         $stmt = self::$db->prepare('SELECT first_commit FROM repos WHERE source = :source');
-        $stmt->bindParam(':source', Git::getRepoPath());
+        $stmt->bindParam(':source', $path);
 
         $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
         if (!$result) return false;

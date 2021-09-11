@@ -62,7 +62,7 @@ class LocalGit {
             $limit = ($diff < Git::getCommitsPerPage()) ? $diff : Git::getCommitsPerPage();
             $offset = 0;
             while ($offset <= $totalCommitLength) {
-                $commitsString = Git::cmd('log -p --skip=' . $offset . ' -' . $limit);
+                $commitsString = Git::cmd('log -p --skip=' . $offset . ' -' . $limit . ' --format=fuller');
                 if (!LocalGitParser::parseCommitsList($commitsString, $totalCommitLength - $offset)) break;
 
                 $offset += $limit;

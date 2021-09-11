@@ -13,7 +13,7 @@ class Commit {
         self::$db = $db;
         self::$table = $table;
     }
-    
+
     public static function hasCommitInDB($hash) {
         $stmt = self::$db->prepare('SELECT * FROM ' . self::$table . ' WHERE hash = :hash');
         $stmt->bindParam(':hash', $hash);
@@ -28,13 +28,21 @@ class Commit {
     }
 
     public static function addCommitToDB($commit) {
-        $stmt = self::$db->prepare('INSERT INTO ' . self::$table . ' (id, hash, date, author, message, files) VALUES(:id, :hash, :date, :author, :message, :files)');
+        $author = $commit->commit->author->name . ' <' . $commit->commit->author->email . '>';
+        $committer = $commit->commit->committer->name . ' <' . $commit->commit->committer->email . '>';
+        $authorDate = date('Y-m-d H:i:s', strtotime($commit->commit->author->date));
+        $commitDate = date('Y-m-d H:i:s', strtotime($commit->commit->committer->date));
+        $files = json_encode($commit->files, JSON_UNESCAPED_UNICODE);
+
+        $stmt = self::$db->prepare('INSERT INTO ' . self::$table . ' (id, hash, author_date, author, commit_date, committer, message, files) VALUES(:id, :hash, :author_date, :author, :commit_date, :committer, :message, :files)');
         $stmt->bindParam(':id', $commit->number);
         $stmt->bindParam(':hash', $commit->sha);
-        $stmt->bindParam(':date', date('Y-m-d H:i:s', strtotime($commit->commit->author->date)));
-        $stmt->bindParam(':author', $commit->commit->author->name);
+        $stmt->bindParam(':author_date', $authorDate);
+        $stmt->bindParam(':author', $author);
+        $stmt->bindParam(':commit_date', $commitDate);
+        $stmt->bindParam(':committer', $committer);
         $stmt->bindParam(':message', $commit->commit->message);
-        $stmt->bindParam(':files', json_encode($commit->files, JSON_UNESCAPED_UNICODE));
+        $stmt->bindParam(':files', $files);
         $result = $stmt->execute();
 
         return $result;
@@ -49,8 +57,9 @@ class Commit {
             self::deleteCommitIDMoreThan($totalCommitLength);
         }
 
+        $processRebasedCount = Git::getProcessRebasedCount();
         $stmt = self::$db->prepare('SELECT id, hash FROM ' . self::$table . ' ORDER BY id DESC LIMIT :limit');
-        $stmt->bindParam(':limit', Git::getProcessRebasedCount());
+        $stmt->bindParam(':limit', $processRebasedCount);
         $result = $stmt->execute();
 
         $needsDeletion = false;
@@ -77,8 +86,23 @@ class Commit {
         return true;
     }
 
-    public static function queryAllCommits() {
-        $results = self::$db->query('SELECT * FROM ' . self::$table);
+    /**
+     * Gets all repository commits
+     * 
+     * @param boolean $noFiles Don't attach file info
+     * @param boolean $hash Select a specific commit by its hash
+     */
+    public static function queryAllCommits($noFiles = false, $hash = false) {
+        $queryFields = '*';
+        if ($noFiles) $queryFields = 'id, hash, author_date, author, commit_date, committer, message';
+        if ($hash) {
+            $stmt = self::$db->prepare('SELECT * FROM ' . self::$table . ' WHERE hash = :hash');
+            $stmt->bindParam(':hash', $hash);
+            $results = $stmt->execute();
+        } else {
+            $results = self::$db->query('SELECT ' . $queryFields . ' FROM ' . self::$table);
+        }
+
         $commits = [];
         while ($res = $results->fetchArray(SQLITE3_ASSOC)) {
             $res = (object) $res;
@@ -87,14 +111,24 @@ class Commit {
                 'commit' => (object) [
                     'author' => (object) [
                         'name' => $res->author,
-                        'date' => $res->date,
+                        'date' => $res->author_date,
+                    ],
+                    'committer' => (object) [
+                        'name' => $res->committer,
+                        'date' => $res->commit_date,
                     ],
                     'message' => $res->message,
                 ],
-                'files' => json_decode($res->files)
             ];
+
+            if (!$noFiles) $commits[$res->hash]->files = json_decode($res->files);
+            if ($hash) return $commits[$res->hash];
         }
 
         return $commits;
+    }
+
+    public static function getCommit($hash, $noFiles = false) {
+        return self::queryAllCommits($noFiles, $hash);
     }
 }

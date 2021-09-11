@@ -2,8 +2,9 @@
 
 namespace bychekru\git_ranker;
 
-// require files if autoload not enabled
+// require files if autoload not enabled while debugging lib
 if (!class_exists('bychekru\git_ranker\Webhook')) {
+    error_reporting(E_ALL);
     require 'LocalGit.php';
     require 'LocalGitParser.php';
     require 'RemoteGit.php';
@@ -12,6 +13,7 @@ if (!class_exists('bychekru\git_ranker\Webhook')) {
     require 'Webhook.php';
     require 'db/Repo.php';
     require 'db/Commit.php';
+    require 'Authors.php';
 }
 
 class Git {
@@ -191,8 +193,8 @@ class Git {
     /**
      * Returns an array of all commits in the repository
      */
-    public static function getAllCommits() {
-        return db\Commit::queryAllCommits();
+    public static function getAllCommits($noFiles = false, $hash = false) {
+        return db\Commit::queryAllCommits($noFiles, $hash);
     }
 
     public static function getFirstCommitHash() {
