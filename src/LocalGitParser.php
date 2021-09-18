@@ -104,7 +104,7 @@ class LocalGitParser {
                 }
         }
 
-        unset($files['ev/null']);
+        if(isset($files['ev/null'])) unset($files['ev/null']);
 
         if ($files[$filename]) $files[$filename]->patch = $patch;
 

@@ -37,7 +37,12 @@ class Authors {
     public static function getListWithCommitCount($withDetails = false, $onlyNames = false, $commit = false) {
         if ($commit) {
             $allCommits = [];
-            $allCommits[$commit] = db\Commit::getCommit($commit, true);
+            if (gettype($commit) == 'object') {
+                $commit = (object) $commit;
+                $allCommits[$commit->sha] = $commit;
+            } else {
+                $allCommits[$commit] = db\Commit::getCommit($commit, true);
+            }
         } else {
             $allCommits = db\Commit::queryAllCommits(true);
         }
@@ -91,8 +96,8 @@ class Authors {
         return self::getListWithCommitCount($withDetails, $onlyNames, $commit);
     }
 
-    public static function getTracked(){
-        return array_map(function($author){
+    public static function getTracked() {
+        return array_map(function ($author) {
             return self::processAuthor($author);
         }, array_keys(self::$authorLinking));
     }

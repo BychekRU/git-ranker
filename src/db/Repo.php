@@ -86,7 +86,7 @@ class Repo {
     }
 
     private static function generateTableName($name, $firstCommit) {
-        $arr = explode('/', trim($name, '/'));
+        $arr = explode('/', trim(str_replace('\\', '/', $name), '/'));
         return str_replace('-', '_', preg_replace('/[^-_a-z\d]/ui', '', $arr[count($arr) - 1])) . '_' . $firstCommit;
     }
 

@@ -96,7 +96,7 @@ class Commit {
         $queryFields = '*';
         if ($noFiles) $queryFields = 'id, hash, author_date, author, commit_date, committer, message';
         if ($hash) {
-            $stmt = self::$db->prepare('SELECT * FROM ' . self::$table . ' WHERE hash = :hash');
+            $stmt = self::$db->prepare('SELECT ' . $queryFields . ' FROM ' . self::$table . ' WHERE hash = :hash');
             $stmt->bindParam(':hash', $hash);
             $results = $stmt->execute();
         } else {

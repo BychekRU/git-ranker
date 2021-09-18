@@ -14,6 +14,7 @@ if (!class_exists('bychekru\git_ranker\Webhook')) {
     require 'db/Repo.php';
     require 'db/Commit.php';
     require 'Authors.php';
+    require 'Rank.php';
 }
 
 class Git {
@@ -40,18 +41,18 @@ class Git {
             };
         // we use Git Bash as it has less limitations, and works in 1.5 times faster
         if (isset($config['repo_local_path']))
-            self::$repoLocalPath = self::getBashPath($config['repo_local_path']);
+            self::$repoLocalPath = self::processAppDir($config['repo_local_path']) . '/';
         if (isset($config['repo_remote_path']))
             self::$repoRemotePath = self::getGitHubPath($config['repo_remote_path']);
         if (isset($config['repo_path'])) {
             if (self::$mode == 'local')
-                self::$repoLocalPath = self::getBashPath($config['repo_path']);
+                self::$repoLocalPath = self::processAppDir($config['repo_path']) . '/';
             else
                 self::$repoRemotePath = self::getGitHubPath($config['repo_path']);
         }
         if (isset($config['git_path'])) self::$gitPath = $config['git_path'];
-        if (isset($config['repo_branch'])) self::$repoBranch = $config['repo_branch'];
-        if (isset($config['branch'])) self::$repoBranch = $config['branch'];
+        if (isset($config['repo_branch'])) self::$repoBranch = trim($config['repo_branch']);
+        if (isset($config['branch'])) self::$repoBranch = trim($config['branch']);
         if (isset($config['commits_per_page'])) self::$commitsPerPage = intval($config['commits_per_page']);
         if (isset($config['process_rebased_count'])) self::$processRebasedCount = intval($config['process_rebased_count']);
 

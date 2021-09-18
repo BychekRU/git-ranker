@@ -4,7 +4,7 @@ namespace bychekru\git_ranker;
 
 class LocalGit {
     public static function git($command, $git_path) {
-        $cmd = 'cd ' . Git::getRepoPath() . ' && ';
+        $cmd = 'cd ' . Git::getBashPath(Git::getRepoPath()) . ' && ';
         if (substr_count($command, 'commit ') > 0) {
             $config = db\Repo::getLocalConfig();
             // while working through PHP functions Windows doesn't see not only
